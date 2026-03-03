@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>LED Matrix 8x8 Editor</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Courier New', monospace;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px 10px;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  h1 {
+    font-size: 1.2rem;
+    color: #00ff88;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .grid-container {
+    display: inline-block;
+    background: #0a0a1a;
+    border: 2px solid #333;
+    border-radius: 8px;
+    padding: 8px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 3px;
+  }
+
+  .cell {
+    width: 40px;
+    height: 40px;
+    background: #1a1a2e;
+    border: 1px solid #333;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.1s, box-shadow 0.1s;
+  }
+
+  .cell:hover {
+    background: #2a2a4e;
+  }
+
+  .cell.on {
+    background: #ff2244;
+    box-shadow: 0 0 8px #ff2244aa, 0 0 2px #ff2244;
+    border-color: #ff4466;
+  }
+
+  .toolbar {
+    display: flex;
+    gap: 8px;
+    margin: 16px 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  button {
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    padding: 8px 16px;
+    border: 1px solid #555;
+    border-radius: 6px;
+    background: #2a2a3e;
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  button:hover {
+    background: #3a3a5e;
+  }
+
+  button:active {
+    background: #4a4a6e;
+  }
+
+  .outputs-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+    width: 100%;
+    max-width: 700px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .output-container {
+    flex: 1;
+    min-width: 280px;
+  }
+
+  .output-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+
+  .output-label {
+    font-size: 0.8rem;
+    color: #888;
+  }
+
+  .copy-btn {
+    font-size: 0.7rem;
+    padding: 3px 10px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    background: #2a2a3e;
+    color: #e0e0e0;
+    cursor: pointer;
+  }
+
+  .copy-btn:hover { background: #3a3a5e; }
+
+  .output {
+    width: 100%;
+    background: #0a0a1a;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 12px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: #00ff88;
+    white-space: pre;
+    overflow-x: auto;
+    line-height: 1.5;
+    min-height: 180px;
+  }
+
+  .output.binary { color: #44aaff; }
+
+  .copied {
+    color: #ffcc00;
+    font-size: 0.8rem;
+    margin-top: 4px;
+    min-height: 1.2em;
+    text-align: center;
+  }
+
+  /* Row/col numbers */
+  .grid-wrapper {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    grid-template-rows: 20px 1fr;
+    gap: 2px;
+  }
+
+  .col-numbers {
+    grid-column: 2;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 3px;
+    padding: 0 0 0 0;
+  }
+
+  .col-numbers span, .row-numbers span {
+    font-size: 0.6rem;
+    color: #555;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .row-numbers {
+    grid-row: 2;
+    display: grid;
+    grid-template-rows: repeat(8, 1fr);
+    gap: 3px;
+  }
+
+  @media (max-width: 400px) {
+    .cell {
+      width: 36px;
+      height: 36px;
+    }
+  }
+
+  @media (max-width: 340px) {
+    .cell {
+      width: 30px;
+      height: 30px;
+    }
+    .grid { gap: 2px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>LED Matrix 8x8</h1>
+
+<div class="grid-container">
+  <div class="grid-wrapper">
+    <div></div>
+    <div class="col-numbers" id="colNums"></div>
+    <div class="row-numbers" id="rowNums"></div>
+    <div class="grid" id="grid"></div>
+  </div>
+</div>
+
+<div class="toolbar">
+  <button onclick="clearGrid()">Clear</button>
+  <button onclick="invertGrid()">Invert</button>
+  <button onclick="shiftGrid('up')">&#9650;</button>
+  <button onclick="shiftGrid('down')">&#9660;</button>
+  <button onclick="shiftGrid('left')">&#9664;</button>
+  <button onclick="shiftGrid('right')">&#9654;</button>
+</div>
+
+<div class="outputs-row">
+  <div class="output-container">
+    <div class="output-header">
+      <span class="output-label">HEX:</span>
+      <button class="copy-btn" onclick="copyOutput('hex')">Copy</button>
+    </div>
+    <div class="output" id="outputHex"></div>
+  </div>
+  <div class="output-container">
+    <div class="output-header">
+      <span class="output-label">Binary:</span>
+      <button class="copy-btn" onclick="copyOutput('bin')">Copy</button>
+    </div>
+    <div class="output binary" id="outputBin"></div>
+  </div>
+</div>
+<div class="copied" id="copied"></div>
+
+<script>
+  const matrix = Array.from({ length: 8 }, () => Array(8).fill(0));
+  let painting = null; // null = not painting, 1 = turning on, 0 = turning off
+
+  const grid = document.getElementById('grid');
+  const outputHex = document.getElementById('outputHex');
+  const outputBin = document.getElementById('outputBin');
+  const colNums = document.getElementById('colNums');
+  const rowNums = document.getElementById('rowNums');
+
+  // Column numbers (bit indices: 7..0, MSB left)
+  for (let c = 0; c < 8; c++) {
+    const s = document.createElement('span');
+    s.textContent = 7 - c;
+    colNums.appendChild(s);
+  }
+
+  // Row numbers
+  for (let r = 0; r < 8; r++) {
+    const s = document.createElement('span');
+    s.textContent = r;
+    rowNums.appendChild(s);
+  }
+
+  // Create cells
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.r = r;
+      cell.dataset.c = c;
+
+      cell.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        const row = +cell.dataset.r;
+        const col = +cell.dataset.c;
+        painting = matrix[row][col] ? 0 : 1;
+        matrix[row][col] = painting;
+        cell.classList.toggle('on', painting === 1);
+        updateOutput();
+      });
+
+      cell.addEventListener('pointerenter', (e) => {
+        if (painting === null) return;
+        const row = +cell.dataset.r;
+        const col = +cell.dataset.c;
+        matrix[row][col] = painting;
+        cell.classList.toggle('on', painting === 1);
+        updateOutput();
+      });
+
+      grid.appendChild(cell);
+    }
+  }
+
+  document.addEventListener('pointerup', () => { painting = null; });
+
+  function updateOutput() {
+    const hexLines = ['byte matrix[8] = {'];
+    const binLines = ['byte matrix[8] = {'];
+    for (let r = 0; r < 8; r++) {
+      let val = 0;
+      for (let c = 0; c < 8; c++) {
+        if (matrix[r][c]) val |= (1 << (7 - c));
+      }
+      const comma = r < 7 ? ',' : '';
+      hexLines.push('  0x' + val.toString(16).toUpperCase().padStart(2, '0') + comma);
+      binLines.push('  B' + val.toString(2).padStart(8, '0') + comma);
+    }
+    hexLines.push('};');
+    binLines.push('};');
+    outputHex.textContent = hexLines.join('\n');
+    outputBin.textContent = binLines.join('\n');
+  }
+
+  function clearGrid() {
+    for (let r = 0; r < 8; r++)
+      for (let c = 0; c < 8; c++)
+        matrix[r][c] = 0;
+    refreshCells();
+    updateOutput();
+  }
+
+  function invertGrid() {
+    for (let r = 0; r < 8; r++)
+      for (let c = 0; c < 8; c++)
+        matrix[r][c] = matrix[r][c] ? 0 : 1;
+    refreshCells();
+    updateOutput();
+  }
+
+  function shiftGrid(dir) {
+    if (dir === 'up') {
+      const first = matrix.shift();
+      matrix.push(Array(8).fill(0));
+    } else if (dir === 'down') {
+      const last = matrix.pop();
+      matrix.unshift(Array(8).fill(0));
+    } else if (dir === 'left') {
+      for (let r = 0; r < 8; r++) {
+        matrix[r].shift();
+        matrix[r].push(0);
+      }
+    } else if (dir === 'right') {
+      for (let r = 0; r < 8; r++) {
+        matrix[r].pop();
+        matrix[r].unshift(0);
+      }
+    }
+    refreshCells();
+    updateOutput();
+  }
+
+  function refreshCells() {
+    const cells = grid.querySelectorAll('.cell');
+    cells.forEach(cell => {
+      const r = +cell.dataset.r;
+      const c = +cell.dataset.c;
+      cell.classList.toggle('on', matrix[r][c] === 1);
+    });
+  }
+
+  function copyOutput(type) {
+    const el = type === 'hex' ? outputHex : outputBin;
+    navigator.clipboard.writeText(el.textContent).then(() => {
+      const msg = document.getElementById('copied');
+      msg.textContent = 'Copied!';
+      setTimeout(() => { msg.textContent = ''; }, 1500);
+    });
+  }
+
+  updateOutput();
+</script>
+
+</body>
+</html>
