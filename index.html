@@ -184,13 +184,18 @@
     gap: 3px;
   }
 
-  /* Editor + Preview side by side */
+  /* Editor + Preview layout */
   .editor-row {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 20px;
-    flex-wrap: wrap;
     justify-content: center;
+  }
+
+  .editor-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   .preview-wrapper {
@@ -198,6 +203,7 @@
     flex-direction: column;
     align-items: center;
     gap: 6px;
+    padding-top: 24px;
   }
 
   .preview-label {
@@ -234,6 +240,15 @@
     box-shadow: 0 0 3px #ff224488;
   }
 
+  @media (max-width: 500px) {
+    .editor-row {
+      flex-wrap: wrap;
+    }
+    .preview-wrapper {
+      padding-top: 0;
+    }
+  }
+
   @media (max-width: 400px) {
     .cell {
       width: 36px;
@@ -252,15 +267,24 @@
 </head>
 <body>
 
-<h1>LED Matrix 8x8</h1>
-
 <div class="editor-row">
-  <div class="grid-container">
-    <div class="grid-wrapper">
-      <div></div>
-      <div class="col-numbers" id="colNums"></div>
-      <div class="row-numbers" id="rowNums"></div>
-      <div class="grid" id="grid"></div>
+  <div class="editor-column">
+    <h1>LED Matrix 8x8</h1>
+    <div class="grid-container">
+      <div class="grid-wrapper">
+        <div></div>
+        <div class="col-numbers" id="colNums"></div>
+        <div class="row-numbers" id="rowNums"></div>
+        <div class="grid" id="grid"></div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button onclick="clearGrid()">Clear</button>
+      <button onclick="invertGrid()">Invert</button>
+      <button onclick="shiftGrid('up')">&#9650;</button>
+      <button onclick="shiftGrid('down')">&#9660;</button>
+      <button onclick="shiftGrid('left')">&#9664;</button>
+      <button onclick="shiftGrid('right')">&#9654;</button>
     </div>
   </div>
   <div class="preview-wrapper">
@@ -269,15 +293,6 @@
       <div class="preview-grid" id="preview"></div>
     </div>
   </div>
-</div>
-
-<div class="toolbar">
-  <button onclick="clearGrid()">Clear</button>
-  <button onclick="invertGrid()">Invert</button>
-  <button onclick="shiftGrid('up')">&#9650;</button>
-  <button onclick="shiftGrid('down')">&#9660;</button>
-  <button onclick="shiftGrid('left')">&#9664;</button>
-  <button onclick="shiftGrid('right')">&#9654;</button>
 </div>
 
 <div class="outputs-row">
